@@ -9,7 +9,13 @@ API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
-client = TelegramClient("session", API_ID, API_HASH)
+from telethon.sessions import StringSession
+
+client = TelegramClient(
+    StringSession(os.getenv("SESSION_STRING")),
+    API_ID,
+    API_HASH
+)
 
 SOURCE_CHANNELS = [
     "chernihiv_nebo",
