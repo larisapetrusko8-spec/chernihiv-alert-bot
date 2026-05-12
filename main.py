@@ -16,12 +16,24 @@ client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 SOURCE_CHANNELS = ["chernihiv_nebo", "Northern_Sich_ukr"]
 
 CHERNIHIV_KEYWORDS = [
-    "чернігів", "чернігівщина", "чернігівської", "чернігівську",
-    "чернігівщину", "чернігівщини", "чернигов", "черниговщина",
-    "ніжин", "нежин", "прилуки", "новгород-сіверський",
-    "новгород сіверський", "носівка", "мена", "бахмач",
-    "корюківка", "сновськ", "семенівка", "городня",
-    "ріпки", "козелець", "бобровиця"
+    "черніг",
+    "черниг",
+    "ніжин",
+    "нежин",
+    "прилук",
+    "прилуки",
+    "корюк",
+    "новгород",
+    "сіверськ",
+    "сновськ",
+    "бахмач",
+    "мена",
+    "носів",
+    "городня",
+    "козеле",
+    "бобровиц",
+    "ріпк",
+    "семенів",
 ]
 
 SIGNATURE = (
@@ -110,7 +122,7 @@ async def main():
     async def handler(event):
         text = event.raw_text.lower()
 
-        if any(word in text for word in CHERNIHIV_KEYWORDS):
+        if any(keyword in text for keyword in CHERNIHIV_KEYWORDS):
             print("Matched news:", event.raw_text[:100], flush=True)
 
             rewritten = rewrite_news(event.raw_text)
