@@ -93,7 +93,16 @@ async def handler(event):
 
 async def main():
     print("Chernihiv alert monitor started")
-    await client.start()
-    await client.run_until_disconnected()
 
-asyncio.run(main())
+    if not SESSION_STRING:
+        print("ERROR: SESSION_STRING is empty or missing")
+        return
+
+    await client.connect()
+
+    if not await client.is_user_authorized():
+        print("ERROR: SESSION_STRING is invalid or broken")
+        return
+
+    print("Telegram session authorized")
+    await client.run_until_disconnected()
