@@ -92,17 +92,41 @@ async def handler(event):
     send_to_channel(final_message)
 
 async def main():
-    print("Chernihiv alert monitor started")
+    print("Chernihiv alert monitor started", flush=True)
 
     if not SESSION_STRING:
-        print("ERROR: SESSION_STRING is empty or missing")
+        print("ERROR: SESSION_STRING missing", flush=True)
         return
 
     await client.connect()
 
     if not await client.is_user_authorized():
-        print("ERROR: SESSION_STRING is invalid or broken")
+        print("ERROR: Invalid SESSION_STRING", flush=True)
         return
 
-    print("Telegram session authorized")
+    print("Telegram session authorized", flush=True)
+
+    @client.on(events.NewMessage(chats=SOURCE_CHANNELS))
+    async def handler(event):
+        text = event.raw_text.lower()
+
+        if any(word in text for word in CHERNIHIV_KEYWORDS):
+            print("Matched news:", event.raw_text[:100], flush=True)
+
+            rewritten = rewrite_news(event.raw_text)
+
+            final_text = f"{rewritten}\n\n{SIGNATURE}"
+
+            await client.send_message(
+                entity=int(CHANNEL_ID),
+                message=final_text,
+                parse_mode="html",
+                link_preview=False
+            )
+
+            print("News forwarded", flush=True)
+
     await client.run_until_disconnected()
+
+
+asyncio.run(main())
