@@ -1,8 +1,8 @@
 from telethon import TelegramClient, events
-from telegram import Bot
 import asyncio
 import os
 import random
+import requests
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -10,7 +10,6 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
 client = TelegramClient("session", API_ID, API_HASH)
-bot = Bot(token=BOT_TOKEN)
 
 SOURCE_CHANNELS = [
     "chernihiv_nebo",
@@ -83,8 +82,10 @@ def rewrite_text(text):
         "Повітряна тривога": "🚨 Повітряна тривога",
         "Увага": "⚠️ Увага",
         "БпЛА": "🛸 БпЛА",
+        "Шахед": "🛸 Шахед",
+        "шахед": "🛸 шахед",
         "ракета": "🚀 ракета",
-        "Шахед": "🛸 Шахед"
+        "Ракета": "🚀 Ракета"
     }
 
     for old, new in replacements.items():
@@ -93,6 +94,23 @@ def rewrite_text(text):
     text += f"\n\n{random.choice(ENDING_PHRASES)}"
 
     return text
+
+def send_to_channel(message):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+    data = {
+        "chat_id": CHANNEL_ID,
+        "text": message,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True
+    }
+
+    response = requests.post(url, data=data)
+
+    if response.status_code != 200:
+        print("Telegram send error:", response.text)
+    else:
+        print("Новина відправлена")
 
 @client.on(events.NewMessage(chats=SOURCE_CHANNELS))
 async def handler(event):
@@ -106,15 +124,9 @@ async def handler(event):
             return
 
         rewritten_text = rewrite_text(text)
+        final_message = rewritten_text + SIGNATURE
 
-        await bot.send_message(
-            chat_id=CHANNEL_ID,
-            text=rewritten_text + SIGNATURE,
-            parse_mode="HTML",
-            disable_web_page_preview=True
-        )
-
-        print("Новина відправлена")
+        send_to_channel(final_message)
 
     except Exception as e:
         print(f"Помилка: {e}")
