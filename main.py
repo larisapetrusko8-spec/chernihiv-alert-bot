@@ -33,7 +33,6 @@ CHERNIHIV_KEYWORDS = [
     "новгород-сіверський",
     "новгород сіверський",
     "носівка",
-    "менa",
     "мена",
     "бахмач",
     "корюківка",
@@ -42,64 +41,87 @@ CHERNIHIV_KEYWORDS = [
     "городня",
     "ріпки",
     "козелець",
-    "бобровиця",
+    "бобровиця"
 ]
 
-DANGER_KEYWORDS = [
-    "бпла",
-    "шахед",
-    "шахеди",
-    "ракета",
-    "ракети",
-    "ракетна",
-    "пуск",
-    "пуски",
-    "каб",
-    "вибух",
-    "вибухи",
-    "загроза",
-    "небезпека",
-    "курс",
-    "напрямок",
-    "летить",
-    "рух"
+SIGNATURE = (
+    '\n\n🍅 <a href="https://t.me/pomidorpochernihivski">Помідор по-чернігівськи</a> | '
+    '<a href="https://t.me/pomidoradmin">Надіслати новину</a>'
+)
+
+ENDING_PHRASES = [
+    "Ситуація залишається напруженою",
+    "Слідкуємо за ситуацією",
+    "Деталі уточнюються",
+    "Бережіть себе",
+    "Тривожна ніч для області",
+    "Інформація оновлюється"
 ]
 
-templates = [
-    "⚠️ Увага, Чернігів\n\nЄ повідомлення про повітряну загрозу для міста/області\n\nБережіть себе",
-    "🚨 Чернігівщина, уважно\n\nФіксується можлива повітряна небезпека\n\nНе ігноруйте тривогу",
-    "⚠️ Загроза для Чернігова та області\n\nСлідкуємо за ситуацією",
-    "🚨 Чернігів / область\n\nМожлива небезпека в повітрі\n\nКраще бути в безпечному місці",
-    "⚠️ Чернігівщина під увагою\n\nЄ ризик повітряної загрози\n\nТримаємося",
-]
+def is_chernihiv_related(text):
+    text = text.lower()
+    return any(word in text for word in CHERNIHIV_KEYWORDS)
 
-sent_messages = set()
+def rewrite_text(text):
+    lines = text.split("\n")
+    cleaned = []
+
+    for line in lines:
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if "https://" in line or "http://" in line:
+            continue
+
+        cleaned.append(line)
+
+    text = "\n".join(cleaned)
+
+    replacements = {
+        "Повітряна тривога": "🚨 Повітряна тривога",
+        "Увага": "⚠️ Увага",
+        "БпЛА": "🛸 БпЛА",
+        "ракета": "🚀 ракета",
+        "Шахед": "🛸 Шахед"
+    }
+
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+
+    text += f"\n\n{random.choice(ENDING_PHRASES)}"
+
+    return text
 
 @client.on(events.NewMessage(chats=SOURCE_CHANNELS))
 async def handler(event):
-    original_text = event.raw_text.lower()
+    try:
+        text = event.raw_text
 
-    has_chernihiv = any(word in original_text for word in CHERNIHIV_KEYWORDS)
-    has_danger = any(word in original_text for word in DANGER_KEYWORDS)
-
-    if has_chernihiv and has_danger:
-        message_key = original_text[:120]
-
-        if message_key in sent_messages:
+        if not text:
             return
 
-        sent_messages.add(message_key)
+        if not is_chernihiv_related(text):
+            return
 
-        message = random.choice(templates)
+        rewritten_text = rewrite_text(text)
 
         await bot.send_message(
             chat_id=CHANNEL_ID,
-            text=message
+            text=rewritten_text + SIGNATURE,
+            parse_mode="HTML",
+            disable_web_page_preview=True
         )
 
+        print("Новина відправлена")
+
+    except Exception as e:
+        print(f"Помилка: {e}")
+
 async def main():
-    await client.start()
     print("Chernihiv alert monitor started")
+    await client.start()
     await client.run_until_disconnected()
 
 asyncio.run(main())
