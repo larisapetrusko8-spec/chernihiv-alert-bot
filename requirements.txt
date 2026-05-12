@@ -1,2 +1,2 @@
-telethon==1.36.0
-requests
+telethon
+python-telegram-bot==13.15
